@@ -8,7 +8,6 @@ from PIL import Image
 
 st.set_page_config(page_title="Mr. Khánh . SHGS - 2026", layout="wide", page_icon="📖")
 
-# Theme
 st.markdown("""
 <style>
     .main {background-color: #f8fafc;}
@@ -17,7 +16,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
 col1, col2 = st.columns([1, 5])
 with col1:
     try:
@@ -53,11 +51,11 @@ with tab1:
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for script in soup(["script", "style"]): script.decompose()
                 text_content = soup.get_text(separator='\n', strip=True)
-                st.success("✅ Fetched!")
+                st.success("✅ Đã lấy nội dung!")
             except:
-                st.error("Lỗi URL")
+                st.error("Lỗi khi lấy URL")
     elif input_method == "Upload File":
-        uploaded = st.file_uploader("Upload PDF/DOCX/TXT", type=["pdf","docx","txt"])
+        uploaded = st.file_uploader("Upload PDF, DOCX, TXT", type=["pdf","docx","txt"])
         if uploaded:
             try:
                 if uploaded.type == "application/pdf":
@@ -68,4 +66,50 @@ with tab1:
                     text_content = "\n".join(para.text for para in doc.paragraphs)
                 else:
                     text_content = uploaded.getvalue().decode()
-                st
+                st.success("✅ File processed!")
+            except Exception as e:
+                st.error(f"Lỗi xử lý file: {e}")
+
+    if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
+        prompt = f"""Task: Create a complete, professional advanced reading lesson.
+
+Level: {level} students
+
+Original Text:
+{text_content}
+
+Include ALL the following sections:
+1. Text Analysis (CEFR level, Summary 150-200 words, Key words/phrases)
+2. Vocabulary in Context (10-15 items: word formation, synonyms, collocations, guessing meaning, AWL)
+3. Reading Comprehension (8 MCQ, 5 T/F/Not Given, 5 Short Answer)
+4. Inference & Critical Thinking (6 questions)
+5. Grammar Focus (advanced structures from the text)
+6. Cloze test (10 gaps)
+7. Matching Headings / Information matching
+8. A Complete Lesson Plan with Pre-reading, While-reading, Post-reading activities
+9. Suggested simplified version for lower level: Tasks and Questions
+
+Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
+
+        st.success("✅ Prompt đã được tạo đúng chuẩn!")
+        st.text_area("📋 Copy toàn bộ prompt này và dán vào Gemini:", prompt, height=650)
+
+        if 'lessons' not in st.session_state:
+            st.session_state.lessons = []
+        st.session_state.lessons.append({
+            "title": f"Full Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
+            "prompt": prompt,
+            "level": level
+        })
+
+with tab2:
+    st.header("My Lessons")
+    for lesson in st.session_state.get('lessons', []):
+        with st.expander(lesson["title"]):
+            st.text_area("Prompt:", lesson["prompt"], height=300)
+
+with tab3:
+    st.header("Export")
+    st.info("Copy prompt từ tab Tạo Prompt.")
+
+st.caption("Mr. Khánh . SHGS - 2026")
