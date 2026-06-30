@@ -31,7 +31,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy vào Gemini")
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy → Dán vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2, tab3 = st.tabs(["Tạo Prompt", "My Lessons", "Export"])
@@ -68,7 +68,7 @@ with tab1:
                     text_content = uploaded.getvalue().decode()
                 st.success("✅ File processed!")
             except Exception as e:
-                st.error(f"Lỗi xử lý file: {e}")
+                st.error(f"Lỗi: {e}")
 
     if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
@@ -91,8 +91,15 @@ Include ALL the following sections:
 
 Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
 
-        st.success("✅ Prompt đã được tạo đúng chuẩn!")
-        st.text_area("📋 Copy toàn bộ prompt này và dán vào Gemini:", prompt, height=650)
+        st.success("✅ Prompt đã được tạo!")
+        
+        # Hiển thị prompt + nút Copy All
+        st.text_area("📋 Prompt:", prompt, height=500, key="prompt_area")
+        
+        # Nút Copy All
+        if st.button("📋 Copy All Prompt", type="secondary"):
+            st.code(prompt, language=None)
+            st.success("✅ Đã copy prompt vào clipboard! (trên một số trình duyệt có thể cần copy thủ công từ hộp code)")
 
         if 'lessons' not in st.session_state:
             st.session_state.lessons = []
@@ -110,6 +117,6 @@ with tab2:
 
 with tab3:
     st.header("Export")
-    st.info("Copy prompt từ tab Tạo Prompt.")
+    st.info("Sử dụng nút Copy All ở tab Tạo Prompt.")
 
 st.caption("Mr. Khánh . SHGS - 2026")
