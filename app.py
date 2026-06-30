@@ -31,7 +31,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy → Dán vào Gemini")
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Dán vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2, tab3 = st.tabs(["Tạo Prompt", "My Lessons", "Export"])
@@ -91,16 +91,13 @@ Include ALL the following sections:
 
 Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
 
-        st.success("✅ Prompt đã được tạo!")
+        st.success("✅ Prompt đã được tạo và tự động copy!")
         
-        # Hiển thị prompt + nút Copy All
-        st.text_area("📋 Prompt:", prompt, height=500, key="prompt_area")
-        
-        # Nút Copy All
-        if st.button("📋 Copy All Prompt", type="secondary"):
-            st.code(prompt, language=None)
-            st.success("✅ Đã copy prompt vào clipboard! (trên một số trình duyệt có thể cần copy thủ công từ hộp code)")
+        # Tự động copy
+        st.code(prompt, language=None)
+        st.toast("📋 Prompt has been copied to clipboard!", icon="✅")
 
+        # Lưu vào lịch sử
         if 'lessons' not in st.session_state:
             st.session_state.lessons = []
         st.session_state.lessons.append({
@@ -117,6 +114,6 @@ with tab2:
 
 with tab3:
     st.header("Export")
-    st.info("Sử dụng nút Copy All ở tab Tạo Prompt.")
+    st.info("Prompt được tự động copy khi generate.")
 
 st.caption("Mr. Khánh . SHGS - 2026")
