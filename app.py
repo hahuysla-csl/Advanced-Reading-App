@@ -8,14 +8,16 @@ from PIL import Image
 
 st.set_page_config(page_title="Mr. Khánh . SHGS - 2026", layout="wide", page_icon="📖")
 
+# Theme
 st.markdown("""
 <style>
     .main {background-color: #f8fafc;}
     h1 {color: #0f172a;}
-    .stButton>button {background-color: #0f172a; color: #d4af37; border-radius: 8px;}
+    .stButton>button {background-color: #0f172a; color: #d4af37; border-radius: 8px; font-weight: bold;}
 </style>
 """, unsafe_allow_html=True)
 
+# Header
 col1, col2 = st.columns([1, 5])
 with col1:
     try:
@@ -31,7 +33,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Chọn loại\n3. Generate Prompt\n4. Dán vào Gemini")
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2, tab3 = st.tabs(["Tạo Prompt", "My Lessons", "Export"])
@@ -42,20 +44,20 @@ with tab1:
     text_content = ""
 
     if input_method == "Paste Text":
-        text_content = st.text_area("Dán văn bản", height=300)
+        text_content = st.text_area("Dán văn bản gốc", height=350)
     elif input_method == "URL":
-        url = st.text_input("URL bài báo")
-        if st.button("Fetch") and url:
+        url = st.text_input("Nhập URL")
+        if st.button("Fetch Content") and url:
             try:
                 r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for script in soup(["script", "style"]): script.decompose()
                 text_content = soup.get_text(separator='\n', strip=True)
-                st.success("Fetched!")
+                st.success("✅ Fetched!")
             except:
                 st.error("Lỗi URL")
     elif input_method == "Upload File":
-        uploaded = st.file_uploader("Upload file", type=["pdf","docx","txt"])
+        uploaded = st.file_uploader("Upload PDF/DOCX/TXT", type=["pdf","docx","txt"])
         if uploaded:
             try:
                 if uploaded.type == "application/pdf":
@@ -66,56 +68,4 @@ with tab1:
                     text_content = "\n".join(para.text for para in doc.paragraphs)
                 else:
                     text_content = uploaded.getvalue().decode()
-                st.success("Processed!")
-            except Exception as e:
-                st.error(str(e))
-
-    prompt_type = st.selectbox("Loại Prompt", [
-        "Full Advanced Lesson Package",
-        "Vocabulary & AWL Focus",
-        "Reading Comprehension Focus",
-        "Grammar & Inference Focus"
-    ])
-
-    if text_content and st.button("🚀 Generate Detailed Prompt", type="primary"):
-        base_prompt = f"""You are an expert Advanced English teacher creating high-quality materials for {level} students.
-
-Original Text:
-{text_content}
-
-Task: Create a complete, professional advanced reading lesson."""
-
-        if prompt_type == "Full Advanced Lesson Package":
-            extra = """Include ALL the following sections:
-1. Text Analysis (CEFR level, Summary 150-200 words, Key phrases)
-2. Vocabulary in Context (10-15 items: word formation, synonyms, collocations, guessing meaning, AWL)
-3. Reading Comprehension (8 MCQ, 5 T/F/Not Given, 5 Short Answer)
-4. Inference & Critical Thinking (6 questions)
-5. Grammar Focus (advanced structures from the text)
-6. Cloze test (10 gaps)
-7. Matching Headings / Information matching
-8. Pre-reading, While-reading, Post-reading activities
-9. Suggested simplified version for lower level"""
-
-        else:
-            extra = "Focus deeply on the chosen area with rich exercises."
-
-        full_prompt = base_prompt + "\n" + extra + "\n\nOutput in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."
-
-        st.success("✅ Prompt chi tiết đã được tạo!")
-        st.text_area("Copy & Paste vào Gemini:", full_prompt, height=500)
-
-        if 'lessons' not in st.session_state:
-            st.session_state.lessons = []
-        st.session_state.lessons.append({
-            "title": f"{prompt_type} - {datetime.now().strftime('%d/%m %H:%M')}",
-            "prompt": full_prompt
-        })
-
-with tab2:
-    st.header("My Lessons")
-    for lesson in st.session_state.get('lessons', []):
-        with st.expander(lesson["title"]):
-            st.text_area("Prompt:", lesson["prompt"], height=200)
-
-st.caption("Mr. Khánh . SHGS - 2026")
+                st
