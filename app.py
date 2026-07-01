@@ -15,7 +15,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Fetch URL\n3. Generate Prompt")
+    st.markdown("1. Nhập URL\n2. Fetch Content\n3. Generate Prompt")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -33,18 +33,34 @@ with tab1:
         url = st.text_input("Nhập URL bài báo")
         if st.button("📥 Fetch Content") and url:
             try:
-                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
                 soup = BeautifulSoup(r.text, 'html.parser')
-                for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
+                
+                # Xóa các phần thừa
+                for tag in soup(["script", "style", "nav", "header", "footer", "aside", "ad", "comment", "form"]):
                     tag.decompose()
-                article = soup.find('article') or soup.find('main') or soup.find('div', class_=lambda x: x and any(k in str(x).lower() for k in ['article', 'content', 'post', 'story']))
-                if article:
-                    st.session_state.text_content = article.get_text(separator='\n', strip=True)
+                
+                # Tìm nội dung chính (cải tiến)
+                possible_containers = [
+                    soup.find('article'),
+                    soup.find('main'),
+                    soup.find('div', {'class': lambda x: x and any(word in str(x).lower() for word in ['article', 'content', 'post', 'story', 'body', 'entry'])}),
+                    soup.find('div', {'id': lambda x: x and any(word in str(x).lower() for word in ['article', 'content', 'post', 'story'])})
+                ]
+                
+                for container in possible_containers:
+                    if container:
+                        text_content = container.get_text(separator='\n', strip=True)
+                        if len(text_content) > 500:  # Chỉ lấy nếu đủ dài
+                            st.session_state.text_content = text_content
+                            break
                 else:
                     st.session_state.text_content = soup.get_text(separator='\n', strip=True)
-                st.success("✅ Đã lấy nội dung!")
+                
+                st.success("✅ Đã lấy nội dung bài báo!")
+                st.text_area("Nội dung đã lấy (chỉnh sửa nếu cần)", st.session_state.text_content, height=300, key="preview")
             except Exception as e:
-                st.error(f"Lỗi: {e}")
+                st.error(f"Lỗi khi lấy URL: {e}")
     elif input_method == "Upload File":
         uploaded = st.file_uploader("Upload PDF, DOCX, TXT", type=["pdf","docx","txt"])
         if uploaded:
@@ -60,8 +76,6 @@ with tab1:
                 st.success("✅ File processed!")
             except Exception as e:
                 st.error(f"Lỗi: {e}")
-
-    st.text_area("Nội dung hiện tại", st.session_state.text_content, height=200, key="preview")
 
     if st.session_state.text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
