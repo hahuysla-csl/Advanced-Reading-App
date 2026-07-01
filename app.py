@@ -15,7 +15,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Fetch (URL)\n3. Generate Prompt")
+    st.markdown("1. Nhập material\n2. Fetch URL\n3. Generate Prompt")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -31,30 +31,32 @@ with tab1:
         url = st.text_input("Nhập URL bài báo")
         if st.button("📥 Fetch Content") and url:
             try:
-                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
                 soup = BeautifulSoup(r.text, 'html.parser')
                 
-                # Xóa các phần không cần thiết
-                for tag in soup(["script", "style", "nav", "header", "footer", "aside", "ad", "comment"]):
+                # Xóa các phần thừa
+                for tag in soup(["script", "style", "nav", "header", "footer", "aside", "form", "button", "img"]):
                     tag.decompose()
                 
-                # Lấy nội dung chính
-                article = soup.find('article') or soup.find('main') or soup.find('div', class_=lambda x: x and ('content' in x.lower() or 'article' in x.lower() or 'post' in x.lower()))
+                # Tìm nội dung chính
+                article = (soup.find('article') or 
+                          soup.find('main') or 
+                          soup.find('div', {'class': lambda x: x and any(word in x.lower() for word in ['article', 'content', 'post', 'story', 'body'])}))
                 
                 if article:
                     text_content = article.get_text(separator='\n', strip=True)
                 else:
                     text_content = soup.get_text(separator='\n', strip=True)
                 
-                # Làm sạch thêm
-                lines = [line.strip() for line in text_content.splitlines() if line.strip()]
-                text_content = '\n'.join(lines)
+                # Làm sạch
+                lines = [line.strip() for line in text_content.split('\n') if line.strip() and len(line.strip()) > 20]
+                text_content = '\n\n'.join(lines[:50])  # Giới hạn để tránh quá dài
                 
                 st.session_state.text_content = text_content
-                st.success("✅ Đã lấy nội dung bài báo!")
-                st.text_area("Nội dung đã lấy (có thể chỉnh sửa)", text_content, height=300)
+                st.success("✅ Đã lấy nội dung!")
+                st.text_area("Nội dung đã lấy (có thể chỉnh)", text_content, height=300, key="preview")
             except Exception as e:
-                st.error(f"Lỗi khi lấy URL: {e}")
+                st.error(f"Lỗi: {e}")
     elif input_method == "Upload File":
         uploaded = st.file_uploader("Upload PDF, DOCX, TXT", type=["pdf","docx","txt"])
         if uploaded:
