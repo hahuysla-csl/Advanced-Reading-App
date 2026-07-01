@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pymupdf
-from PIL import Image
 
 st.set_page_config(page_title="Mr. Khánh . SHGS - 2026", layout="wide", page_icon="📖")
 
@@ -12,19 +11,15 @@ st.subheader("Advanced Reading Generator")
 
 st.divider()
 
-with st.sidebar:
-    st.header("Hướng dẫn")
-    st.markdown("1. Chọn cách nhập\n2. Nhập nội dung\n3. Nhấn Generate\n4. Copy prompt")
-    level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
+level = st.selectbox("Chọn Level", ["B2", "C1", "C2"], index=1)
+
+st.header("Nhập Authentic Material")
+method = st.radio("Chọn cách nhập", ["Paste Text", "URL", "Upload File"])
 
 text_content = ""
 
-col1, col2 = st.columns(2)
-with col1:
-    method = st.radio("Cách nhập", ["Paste Text", "URL", "Upload File"])
-
 if method == "Paste Text":
-    text_content = st.text_area("Dán văn bản gốc vào đây", height=400)
+    text_content = st.text_area("Dán văn bản vào đây", height=400)
 elif method == "URL":
     url = st.text_input("Nhập URL bài báo")
     if st.button("Fetch Content") and url:
@@ -33,9 +28,9 @@ elif method == "URL":
             soup = BeautifulSoup(r.text, 'html.parser')
             for script in soup(["script", "style"]): script.decompose()
             text_content = soup.get_text(separator='\n', strip=True)
-            st.success("✅ Đã lấy nội dung!")
+            st.success("✅ Đã lấy nội dung thành công!")
         except:
-            st.error("Lỗi URL")
+            st.error("Lỗi khi lấy URL")
 elif method == "Upload File":
     uploaded = st.file_uploader("Upload file", type=["pdf","docx","txt"])
     if uploaded:
@@ -52,8 +47,9 @@ elif method == "Upload File":
         except Exception as e:
             st.error(str(e))
 
-if text_content and st.button("🚀 Generate Full Prompt", type="primary"):
-    prompt = f"""Task: Create a complete, professional advanced reading lesson.
+if text_content:
+    if st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
+        prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
 Level: {level} students
 
@@ -73,19 +69,10 @@ Include ALL the following sections:
 
 Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
 
-    st.success("✅ Prompt đã được tạo!")
+        st.success("✅ Prompt đã được tạo!")
+        st.subheader("📋 Prompt")
+        st.code(prompt, language=None)
 
-    st.subheader("📋 Prompt - Copy từ đây")
-    st.code(prompt, language=None)
-
-    st.info("**Cách copy:** Click vào hộp code xám → Ctrl + A → Ctrl + C")
-
-if 'lessons' not in st.session_state:
-    st.session_state.lessons = []
-if text_content and st.button("💾 Save this lesson"):
-    st.session_state.lessons.append({
-        "title": f"Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
-        "prompt": prompt if 'prompt' in locals() else ""
-    })
+        st.info("**Cách copy:** Click vào hộp code xám → Ctrl + A → Ctrl + C")
 
 st.caption("Mr. Khánh . SHGS - 2026")
