@@ -31,7 +31,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Fetch (nếu dùng URL)\n3. Generate Prompt\n4. Copy prompt")
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy prompt\n4. Dán vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -39,11 +39,10 @@ tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
 with tab1:
     st.header("Nhập Authentic Material")
     input_method = st.radio("Cách nhập", ["Paste Text", "URL", "Upload File"], horizontal=True)
-    
-    text_content = st.session_state.get('current_text', "")
+    text_content = ""
 
     if input_method == "Paste Text":
-        text_content = st.text_area("Dán văn bản gốc", value=text_content, height=300, key="paste")
+        text_content = st.text_area("Dán văn bản gốc", height=300)
     elif input_method == "URL":
         url = st.text_input("Nhập URL bài báo")
         if st.button("📥 Fetch Content") and url:
@@ -52,8 +51,7 @@ with tab1:
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for script in soup(["script", "style"]): script.decompose()
                 text_content = soup.get_text(separator='\n', strip=True)
-                st.session_state.current_text = text_content
-                st.success("✅ Đã lấy nội dung thành công!")
+                st.success("✅ Đã lấy nội dung!")
             except:
                 st.error("Lỗi khi lấy URL")
     elif input_method == "Upload File":
@@ -68,12 +66,10 @@ with tab1:
                     text_content = "\n".join(para.text for para in doc.paragraphs)
                 else:
                     text_content = uploaded.getvalue().decode()
-                st.session_state.current_text = text_content
                 st.success("✅ File processed!")
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
-    # Nút Generate
     if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
@@ -101,9 +97,11 @@ Output in clean professional Markdown with clear headings, numbered questions, a
         st.code(prompt, language=None)
 
         st.info("""
-        **Cách copy:**
-        1. Click chuột vào biểu tượng Copy 📋 ở góc trên bên phải của Prompt.
-        2. Mở Gemini → Dùng tổ hợp Ctrl + V để dán prompt.
+        **Cách copy prompt:**
+        1. Click chuột vào hộp code xám bên trên (prompt sẽ được highlight)
+        2. Nhấn Ctrl + A (chọn hết)
+        3. Nhấn Ctrl + C (copy)
+        4. Mở Gemini (aistudio.google.com) → Nhấn Ctrl + V để dán
         """)
 
         if 'lessons' not in st.session_state:
