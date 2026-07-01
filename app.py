@@ -15,7 +15,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Fetch URL\n3. Generate Prompt")
+    st.markdown("1. Chọn cách nhập\n2. Nhập/Fetch\n3. Generate Prompt")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -23,38 +23,26 @@ tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
 with tab1:
     st.header("Nhập Authentic Material")
     input_method = st.radio("Cách nhập", ["Paste Text", "URL", "Upload File"], horizontal=True)
-    text_content = st.session_state.get("text_content", "")
+
+    if 'text_content' not in st.session_state:
+        st.session_state.text_content = ""
 
     if input_method == "Paste Text":
-        text_content = st.text_area("Dán văn bản gốc", value=text_content, height=400, key="paste")
+        st.session_state.text_content = st.text_area("Dán văn bản gốc", value=st.session_state.text_content, height=400, key="paste")
     elif input_method == "URL":
         url = st.text_input("Nhập URL bài báo")
         if st.button("📥 Fetch Content") and url:
             try:
-                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+                r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
                 soup = BeautifulSoup(r.text, 'html.parser')
-                
-                # Xóa các phần thừa
-                for tag in soup(["script", "style", "nav", "header", "footer", "aside", "form", "button", "img"]):
+                for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
                     tag.decompose()
-                
-                # Tìm nội dung chính
-                article = (soup.find('article') or 
-                          soup.find('main') or 
-                          soup.find('div', {'class': lambda x: x and any(word in x.lower() for word in ['article', 'content', 'post', 'story', 'body'])}))
-                
+                article = soup.find('article') or soup.find('main') or soup.find('div', class_=lambda x: x and ('content' in str(x).lower() or 'article' in str(x).lower()))
                 if article:
-                    text_content = article.get_text(separator='\n', strip=True)
+                    st.session_state.text_content = article.get_text(separator='\n', strip=True)
                 else:
-                    text_content = soup.get_text(separator='\n', strip=True)
-                
-                # Làm sạch
-                lines = [line.strip() for line in text_content.split('\n') if line.strip() and len(line.strip()) > 20]
-                text_content = '\n\n'.join(lines[:50])  # Giới hạn để tránh quá dài
-                
-                st.session_state.text_content = text_content
+                    st.session_state.text_content = soup.get_text(separator='\n', strip=True)
                 st.success("✅ Đã lấy nội dung!")
-                st.text_area("Nội dung đã lấy (có thể chỉnh)", text_content, height=300, key="preview")
             except Exception as e:
                 st.error(f"Lỗi: {e}")
     elif input_method == "Upload File":
@@ -63,24 +51,25 @@ with tab1:
             try:
                 if uploaded.type == "application/pdf":
                     doc = pymupdf.open(stream=uploaded.read(), filetype="pdf")
-                    text_content = "".join(page.get_text() for page in doc)
+                    st.session_state.text_content = "".join(page.get_text() for page in doc)
                 elif uploaded.type.endswith("wordprocessingml.document"):
                     doc = docx.Document(uploaded)
-                    text_content = "\n".join(para.text for para in doc.paragraphs)
+                    st.session_state.text_content = "\n".join(para.text for para in doc.paragraphs)
                 else:
-                    text_content = uploaded.getvalue().decode()
-                st.session_state.text_content = text_content
+                    st.session_state.text_content = uploaded.getvalue().decode()
                 st.success("✅ File processed!")
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
-    if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
+    st.text_area("Nội dung hiện tại (có thể chỉnh sửa)", st.session_state.text_content, height=300, key="preview")
+
+    if st.session_state.text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
 Level: {level} students
 
 Original Text:
-{text_content}
+{st.session_state.text_content}
 
 Include ALL the following sections:
 1. Text Analysis (CEFR level, Summary 150-200 words, Key words/phrases)
@@ -89,31 +78,4 @@ Include ALL the following sections:
 4. Inference & Critical Thinking (6 questions)
 5. Grammar Focus (advanced structures from the text)
 6. Cloze test (10 gaps)
-7. Matching Headings / Information matching
-8. A Complete Lesson Plan with Pre-reading, While-reading, Post-reading activities
-9. Suggested simplified version for lower level: Tasks and Questions
-
-Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
-
-        st.success("✅ Prompt đã được tạo!")
-
-        st.subheader("📋 Prompt")
-        st.code(prompt, language=None)
-
-        st.info("**Cách copy:** Click vào hộp code xám → Ctrl + A → Ctrl + C")
-
-        if 'lessons' not in st.session_state:
-            st.session_state.lessons = []
-        st.session_state.lessons.append({
-            "title": f"Full Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
-            "prompt": prompt,
-            "level": level
-        })
-
-with tab2:
-    st.header("My Lessons")
-    for lesson in st.session_state.get('lessons', []):
-        with st.expander(lesson["title"]):
-            st.text_area("Prompt:", lesson["prompt"], height=300)
-
-st.caption("Mr. Khánh . SHGS - 2026")
+7. Matching
