@@ -15,7 +15,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Chọn cách nhập\n2. Nhập/Fetch\n3. Generate Prompt")
+    st.markdown("1. Nhập material\n2. Fetch URL\n3. Generate Prompt")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -37,7 +37,7 @@ with tab1:
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
                     tag.decompose()
-                article = soup.find('article') or soup.find('main') or soup.find('div', class_=lambda x: x and ('content' in str(x).lower() or 'article' in str(x).lower()))
+                article = soup.find('article') or soup.find('main') or soup.find('div', class_=lambda x: x and any(k in str(x).lower() for k in ['article', 'content', 'post', 'story']))
                 if article:
                     st.session_state.text_content = article.get_text(separator='\n', strip=True)
                 else:
@@ -61,7 +61,7 @@ with tab1:
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
-    st.text_area("Nội dung hiện tại (có thể chỉnh sửa)", st.session_state.text_content, height=300, key="preview")
+    st.text_area("Nội dung hiện tại", st.session_state.text_content, height=200, key="preview")
 
     if st.session_state.text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
@@ -78,4 +78,31 @@ Include ALL the following sections:
 4. Inference & Critical Thinking (6 questions)
 5. Grammar Focus (advanced structures from the text)
 6. Cloze test (10 gaps)
-7. Matching
+7. Matching Headings / Information matching
+8. A Complete Lesson Plan with Pre-reading, While-reading, Post-reading activities
+9. Suggested simplified version for lower level: Tasks and Questions
+
+Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
+
+        st.success("✅ Prompt đã được tạo!")
+
+        st.subheader("📋 Prompt")
+        st.code(prompt, language=None)
+
+        st.info("**Cách copy:** Click vào hộp code xám → Ctrl + A → Ctrl + C")
+
+        if 'lessons' not in st.session_state:
+            st.session_state.lessons = []
+        st.session_state.lessons.append({
+            "title": f"Full Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
+            "prompt": prompt,
+            "level": level
+        })
+
+with tab2:
+    st.header("My Lessons")
+    for lesson in st.session_state.get('lessons', []):
+        with st.expander(lesson["title"]):
+            st.text_area("Prompt:", lesson["prompt"], height=300)
+
+st.caption("Mr. Khánh . SHGS - 2026")
