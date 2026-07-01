@@ -45,7 +45,8 @@ with tab1:
         text_content = st.text_area("Dán văn bản gốc", height=300)
     elif input_method == "URL":
         url = st.text_input("Nhập URL bài báo")
-        if st.button("📥 Fetch Content") and url:
+        fetch_button = st.button("📥 Fetch Content")
+        if fetch_button and url:
             try:
                 r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
                 soup = BeautifulSoup(r.text, 'html.parser')
@@ -70,7 +71,7 @@ with tab1:
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
-    # Nút Generate - Đặt ngoài if để hoạt động với tất cả phương thức
+    # Nút Generate - Luôn hiển thị nếu có text_content
     if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
