@@ -45,13 +45,13 @@ with tab1:
         text_content = st.text_area("Dán văn bản gốc", height=300)
     elif input_method == "URL":
         url = st.text_input("Nhập URL bài báo")
-        if st.button("Fetch Content") and url:
+        if st.button("📥 Fetch Content") and url:
             try:
                 r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for script in soup(["script", "style"]): script.decompose()
                 text_content = soup.get_text(separator='\n', strip=True)
-                st.success("✅ Đã lấy nội dung!")
+                st.success("✅ Đã lấy nội dung thành công!")
             except:
                 st.error("Lỗi khi lấy URL")
     elif input_method == "Upload File":
@@ -70,6 +70,7 @@ with tab1:
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
+    # Nút Generate - Đặt ngoài if để hoạt động với tất cả phương thức
     if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
