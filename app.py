@@ -8,20 +8,30 @@ from PIL import Image
 
 st.set_page_config(page_title="Mr. Khánh . SHGS - 2026", layout="wide", page_icon="📖")
 
-st.title("Mr. Khánh . SHGS - 2026")
-st.subheader("Advanced Reading Generator")
+st.markdown("""
+<style>
+    .main {background-color: #f8fafc;}
+    h1 {color: #0f172a;}
+    .stButton>button {background-color: #0f172a; color: #d4af37; border-radius: 8px; font-weight: bold;}
+</style>
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1, 5])
+with col1:
+    try:
+        logo = Image.open("logo.png")
+        st.image(logo, width=130)
+    except:
+        st.markdown("# 📖")
+with col2:
+    st.title("Mr. Khánh . SHGS - 2026")
+    st.subheader("Advanced Reading Generator")
 
 st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("""
-    1. Nhập văn bản / URL / File  
-    2. Nhấn Generate Prompt  
-    3. Click vào hộp code xám  
-    4. Ctrl + A → Ctrl + C  
-    5. Dán vào Gemini
-    """)
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy prompt\n4. Dán vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -81,33 +91,29 @@ Include ALL the following sections:
 
 Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
 
-        st.success("✅ Prompt đã sẵn sàng!")
+        st.success("✅ Prompt đã được tạo!")
 
-        st.subheader("📋 Prompt - Copy từ đây:")
+        st.subheader("📋 Prompt")
         st.code(prompt, language=None)
 
         st.info("""
         **Cách copy:**
-        1. Click chuột vào hộp code xám bên trên
-        2. Nhấn Ctrl + A (chọn hết)
-        3. Nhấn Ctrl + C (copy)
-        4. Mở Gemini → Ctrl + V (dán)
+        1. Click chuột vào biểu tượng Copy 📋 ở góc trên bên phải của Prompt.
+        2. Mở Gemini → Dùng tổ hợp Ctrl + V để dán prompt.
         """)
 
         if 'lessons' not in st.session_state:
             st.session_state.lessons = []
         st.session_state.lessons.append({
-            "title": f"Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
-            "prompt": prompt
+            "title": f"Full Lesson - {datetime.now().strftime('%d/%m %H:%M')}",
+            "prompt": prompt,
+            "level": level
         })
 
 with tab2:
     st.header("My Lessons")
-    if st.session_state.get('lessons'):
-        for lesson in st.session_state.lessons:
-            with st.expander(lesson["title"]):
-                st.text_area("Prompt:", lesson["prompt"], height=200)
-    else:
-        st.info("Chưa có lesson nào.")
+    for lesson in st.session_state.get('lessons', []):
+        with st.expander(lesson["title"]):
+            st.text_area("Prompt:", lesson["prompt"], height=300)
 
 st.caption("Mr. Khánh . SHGS - 2026")
