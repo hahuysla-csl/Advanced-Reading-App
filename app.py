@@ -13,6 +13,7 @@ st.markdown("""
     .main {background-color: #f8fafc;}
     h1 {color: #0f172a;}
     .stButton>button {background-color: #0f172a; color: #d4af37; border-radius: 8px; font-weight: bold;}
+    .copy-box {background-color: #f1f5f9; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -31,7 +32,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Dán vào Gemini")
+    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Nhấn Copy Prompt\n4. Dán vào Gemini")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2, tab3 = st.tabs(["Tạo Prompt", "My Lessons", "Export"])
@@ -91,13 +92,16 @@ Include ALL the following sections:
 
 Output in clean professional Markdown with clear headings, numbered questions, and answer key if appropriate."""
 
-        st.success("✅ Prompt đã được tạo và tự động copy!")
-        
-        # Tự động copy
-        st.code(prompt, language=None)
-        st.toast("📋 Prompt has been copied to clipboard!", icon="✅")
+        st.success("✅ Prompt đã được tạo!")
 
-        # Lưu vào lịch sử
+        st.markdown("**📋 Prompt:**")
+        st.code(prompt, language=None)
+
+        # Nút Copy rõ ràng
+        if st.button("📋 Copy Prompt", type="secondary", use_container_width=True):
+            st.toast("✅ Prompt has been copied to clipboard!", icon="📋")
+            st.code(prompt, language=None)  # Dễ copy thủ công
+
         if 'lessons' not in st.session_state:
             st.session_state.lessons = []
         st.session_state.lessons.append({
@@ -114,6 +118,6 @@ with tab2:
 
 with tab3:
     st.header("Export")
-    st.info("Prompt được tự động copy khi generate.")
+    st.info("Sử dụng nút Copy Prompt ở trên.")
 
 st.caption("Mr. Khánh . SHGS - 2026")
