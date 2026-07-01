@@ -31,7 +31,7 @@ st.divider()
 
 with st.sidebar:
     st.header("Hướng dẫn")
-    st.markdown("1. Nhập material\n2. Generate Prompt\n3. Copy prompt\n4. Dán vào Gemini")
+    st.markdown("1. Nhập material\n2. Fetch (nếu dùng URL)\n3. Generate Prompt\n4. Copy prompt")
     level = st.selectbox("Level", ["B2", "C1", "C2"], index=1)
 
 tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
@@ -39,19 +39,20 @@ tab1, tab2 = st.tabs(["Tạo Prompt", "My Lessons"])
 with tab1:
     st.header("Nhập Authentic Material")
     input_method = st.radio("Cách nhập", ["Paste Text", "URL", "Upload File"], horizontal=True)
-    text_content = ""
+    
+    text_content = st.session_state.get('current_text', "")
 
     if input_method == "Paste Text":
-        text_content = st.text_area("Dán văn bản gốc", height=300)
+        text_content = st.text_area("Dán văn bản gốc", value=text_content, height=300, key="paste")
     elif input_method == "URL":
         url = st.text_input("Nhập URL bài báo")
-        fetch_button = st.button("📥 Fetch Content")
-        if fetch_button and url:
+        if st.button("📥 Fetch Content") and url:
             try:
                 r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
                 soup = BeautifulSoup(r.text, 'html.parser')
                 for script in soup(["script", "style"]): script.decompose()
                 text_content = soup.get_text(separator='\n', strip=True)
+                st.session_state.current_text = text_content
                 st.success("✅ Đã lấy nội dung thành công!")
             except:
                 st.error("Lỗi khi lấy URL")
@@ -67,11 +68,12 @@ with tab1:
                     text_content = "\n".join(para.text for para in doc.paragraphs)
                 else:
                     text_content = uploaded.getvalue().decode()
+                st.session_state.current_text = text_content
                 st.success("✅ File processed!")
             except Exception as e:
                 st.error(f"Lỗi: {e}")
 
-    # Nút Generate - Luôn hiển thị nếu có text_content
+    # Nút Generate
     if text_content and st.button("🚀 Generate Full Prompt for Gemini", type="primary"):
         prompt = f"""Task: Create a complete, professional advanced reading lesson.
 
